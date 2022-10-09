@@ -1,3 +1,5 @@
+Use Java 11 (designed and tested with openjdk 11.0.16.1)
+
 Run with
 `./gradlew run`
 
