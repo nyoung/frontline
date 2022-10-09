@@ -1,0 +1,5 @@
+Run with
+`./gradlew run`
+
+Execute test suite
+`./gradlew test`
