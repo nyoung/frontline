@@ -1,43 +1,60 @@
 package frontline;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
-/**
- * Monotone sub-array is a sequence of elements where each element is bigger than the previous one.
- */
 public class Monotone {
 
-    final List<List<Integer>> monotones;
+  public static void main(String[] args) {
+    List<Integer> list = List.of(1, 2, 9, 4, 7, 3, 11, 8, 14, 6);
 
-    public Monotone(List<Integer> originalArray) {
-        this.monotones = calculateMonotones(originalArray);
-    }
+    populateRefMap(list);
+            findStartingKeys().stream()
+                    .map(Monotone::getMonotonesForKey)
+                    .flatMap(Collection::stream)
+                    .forEach(System.out::println);
+  }
 
-    /**
-     * Find the longest monotone sub-array from an array of numbers.
-     */
-    List<Integer> longest() {
-        return monotones.stream().max(Comparator.comparing(List::size)).orElse(null);
-    }
+  private static List<Integer> findStartingKeys() {
+    List<Integer> startingKeys = new ArrayList<>();
 
-    private List<List<Integer>> calculateMonotones(List<Integer> originalArray) {
-        List<List<Integer>> monotones = new ArrayList<>();
-        List<Integer> currentRun = new ArrayList<>();
+    refMap.keySet().forEach(key -> {
+      if (startingKeys.isEmpty() || key < Collections.min(startingKeys)) {
+        startingKeys.add(key);
+      }
+    });
 
-        originalArray.forEach(element -> {
-            if (!currentRun.isEmpty() && element <= currentRun.get(currentRun.size() - 1)) {
-                monotones.add(new ArrayList<>(currentRun));
-                currentRun.clear();
-            }
-            currentRun.add(element);
-        });
+    return startingKeys;
+  }
 
-        if (!currentRun.isEmpty()) {
-            monotones.add(currentRun);
+  private static Map<Integer, List<Integer>> refMap = new LinkedHashMap<>();
+
+  private static void populateRefMap(List<Integer> valueList) {
+    // Create a reference map of all the starting values
+    valueList.forEach(element -> {
+      refMap.forEach((key, value) -> {
+        // if the element is subordinate to this key and a direct child, then add it to this key's children
+        if (element > key && (value.isEmpty() || element < Collections.min(value))) {
+          value.add(element);
         }
+      });
+      refMap.put(element, new ArrayList<>());
+    });
+  }
 
-        return monotones;
+  private static List<LinkedList<Integer>> getMonotonesForKey(Integer key) {
+    var monotones = refMap.get(key).stream()
+            .map(Monotone::getMonotonesForKey)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toList());
+
+    if (monotones.isEmpty()) {
+      monotones = new ArrayList<>(List.of(new LinkedList<>()));
     }
+
+    monotones.forEach(monotone -> monotone.addFirst(key));
+
+    return monotones;
+  }
 }
+
